@@ -30,7 +30,7 @@ type aes256gcm struct {
 func New(ctx context.Context, b64Key string) (Crypto, error) {
 	log := sig.Start(ctx)
 	defer log.End()
-	key, err := codec.Decode(ctx, b64Key)
+	key, err := codec.Decode(log.Ctx(), b64Key)
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -62,12 +62,12 @@ func (a *aes256gcm) Encrypt(ctx context.Context, input []byte) (string, error) {
 		return "", err
 	}
 	ciphertext := a.gcm.Seal(nonce, nonce, input, nil)
-	return codec.Encode(ctx, ciphertext), nil
+	return codec.Encode(log.Ctx(), ciphertext), nil
 }
 func (a *aes256gcm) Decrypt(ctx context.Context, b64Input string) ([]byte, error) {
 	log := sig.Start(ctx)
 	defer log.End()
-	data, err := codec.Decode(ctx, b64Input)
+	data, err := codec.Decode(log.Ctx(), b64Input)
 	if err != nil {
 		log.Error(err)
 		return nil, err
