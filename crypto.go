@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -8,11 +9,12 @@ import (
 	"io"
 
 	"github.com/gokpm/go-codec"
+	"github.com/gokpm/go-sig"
 )
 
 type Crypto interface {
-	Encrypt([]byte) (string, error)
-	Decrypt(string) ([]byte, error)
+	Encrypt(context.Context, []byte) (string, error)
+	Decrypt(context.Context, string) ([]byte, error)
 }
 
 type aes256gcm struct {
@@ -20,8 +22,10 @@ type aes256gcm struct {
 	nonceSize int
 }
 
-func New(b64Key string) (Crypto, error) {
-	key, err := codec.Decode(b64Key)
+func New(ctx context.Context, b64Key string) (Crypto, error) {
+	log := sig.Start(ctx)
+	defer log.End()
+	key, err := codec.Decode(ctx, b64Key)
 	if err != nil {
 		return nil, err
 	}
@@ -39,17 +43,21 @@ func New(b64Key string) (Crypto, error) {
 	return &aes256gcm{gcm: gcm, nonceSize: gcm.NonceSize()}, nil
 }
 
-func (a *aes256gcm) Encrypt(input []byte) (string, error) {
+func (a *aes256gcm) Encrypt(ctx context.Context, input []byte) (string, error) {
+	log := sig.Start(ctx)
+	defer log.End()
 	nonce := make([]byte, a.nonceSize)
 	_, err := io.ReadFull(rand.Reader, nonce)
 	if err != nil {
 		return "", err
 	}
 	ciphertext := a.gcm.Seal(nonce, nonce, input, nil)
-	return codec.Encode(ciphertext), nil
+	return codec.Encode(ctx, ciphertext), nil
 }
-func (a *aes256gcm) Decrypt(b64Input string) ([]byte, error) {
-	data, err := codec.Decode(b64Input)
+func (a *aes256gcm) Decrypt(ctx context.Context, b64Input string) ([]byte, error) {
+	log := sig.Start(ctx)
+	defer log.End()
+	data, err := codec.Decode(ctx, b64Input)
 	if err != nil {
 		return nil, err
 	}
