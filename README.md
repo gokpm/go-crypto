@@ -1,13 +1,6 @@
 # go-crypto
 
-Simple Go package for AES-256-GCM encryption and decryption with base64 encoding.
-
-## Features
-
-- **AES-256-GCM**: Authenticated encryption (confidentiality + integrity)
-- **Base64 I/O**: Safe string handling for keys and encrypted data
-- **Secure random nonces**: Each encryption uses a unique nonce
-- **Error handling**: Proper validation and error reporting
+A Go package providing AES-256-GCM encryption/decryption with base64 encoding and structured logging.
 
 ## Installation
 
@@ -18,30 +11,56 @@ go get github.com/gokpm/go-crypto
 ## Usage
 
 ```go
-import "github.com/gokpm/go-crypto"
+import (
+    "context"
+    "github.com/gokpm/go-crypto"
+)
+
+ctx := context.Background()
+
+// Create crypto instance with base64-encoded 32-byte key
+b64Key := "your-base64-encoded-32-byte-key"
+c, err := crypto.New(ctx, b64Key)
+if err != nil {
+    panic(err)
+}
 
 // Encrypt data
-key := "your-32-byte-base64-encoded-key"
-data := []byte("Hello, World!")
-encrypted, err := Encrypt(data, key)
+data := []byte("secret message")
+encrypted, err := c.Encrypt(ctx, data)
 if err != nil {
-    log.Fatal(err)
+    panic(err)
 }
 
 // Decrypt data
-decrypted, err := Decrypt(encrypted, key)
+decrypted, err := c.Decrypt(ctx, encrypted)
 if err != nil {
-    log.Fatal(err)
+    panic(err)
 }
 ```
 
-## Requirements
+## Interface
 
-- Go 1.13+
-- 32-byte (256-bit) base64-encoded key for AES-256
+```go
+type Crypto interface {
+    Encrypt(context.Context, []byte) (string, error)
+    Decrypt(context.Context, string) ([]byte, error)
+}
+```
 
-## Security Notes
+## Features
 
-- Uses cryptographically secure random nonce generation
-- Nonce is automatically prepended to ciphertext
-- GCM mode provides authentication - tampered data will fail decryption
+- AES-256-GCM authenticated encryption
+- Automatic nonce generation for each encryption
+- Base64 encoding of encrypted output
+- Structured logging via [go-sig](https://github.com/gokpm/go-sig)
+- Input validation and error handling
+
+## Errors
+
+- `ErrInvalidKeyLength` - Key must be exactly 32 bytes (AES-256)
+- `ErrShortCiphertext` - Ciphertext too short to contain valid nonce
+
+## License
+
+MIT
