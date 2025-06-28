@@ -20,9 +20,11 @@ var (
 type Crypto interface {
 	Encrypt(context.Context, []byte) (string, error)
 	Decrypt(context.Context, string) ([]byte, error)
+	Key() string
 }
 
 type aes256gcm struct {
+	b64Key    string
 	gcm       cipher.AEAD
 	nonceSize int
 }
@@ -49,7 +51,7 @@ func New(ctx context.Context, b64Key string) (Crypto, error) {
 		log.Error(err)
 		return nil, err
 	}
-	return &aes256gcm{gcm: gcm, nonceSize: gcm.NonceSize()}, nil
+	return &aes256gcm{b64Key: b64Key, gcm: gcm, nonceSize: gcm.NonceSize()}, nil
 }
 
 func (a *aes256gcm) Encrypt(ctx context.Context, input []byte) (string, error) {
@@ -64,6 +66,7 @@ func (a *aes256gcm) Encrypt(ctx context.Context, input []byte) (string, error) {
 	ciphertext := a.gcm.Seal(nonce, nonce, input, nil)
 	return codec.Encode(log.Ctx(), ciphertext), nil
 }
+
 func (a *aes256gcm) Decrypt(ctx context.Context, b64Input string) ([]byte, error) {
 	log := sig.Start(ctx)
 	defer log.End()
@@ -83,4 +86,8 @@ func (a *aes256gcm) Decrypt(ctx context.Context, b64Input string) ([]byte, error
 		return nil, err
 	}
 	return plaintext, nil
+}
+
+func (a *aes256gcm) Key() string {
+	return a.b64Key
 }
