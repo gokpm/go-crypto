@@ -1,6 +1,6 @@
 # go-crypto
 
-A Go package providing AES-256-GCM encryption/decryption with base64 encoding and structured logging.
+A Go package providing AES-256-GCM encryption/decryption with base64 encoding.
 
 ## Installation
 
@@ -12,30 +12,28 @@ go get github.com/gokpm/go-crypto
 
 ```go
 import (
-    "context"
+    "log"
     "github.com/gokpm/go-crypto"
 )
 
-ctx := context.Background()
-
 // Create crypto instance with base64-encoded 32-byte key
 b64Key := "your-base64-encoded-32-byte-key"
-c, err := crypto.New(ctx, b64Key)
+c, err := crypto.New(b64Key)
 if err != nil {
-    panic(err)
+    log.Fatalln(err)
 }
 
 // Encrypt data
 data := []byte("secret message")
-encrypted, err := c.Encrypt(ctx, data)
+encrypted, err := c.Encrypt(data)
 if err != nil {
-    panic(err)
+    log.Fatalln(err)
 }
 
 // Decrypt data
-decrypted, err := c.Decrypt(ctx, encrypted)
+decrypted, err := c.Decrypt(encrypted)
 if err != nil {
-    panic(err)
+    log.Fatalln(err)
 }
 ```
 
@@ -43,8 +41,8 @@ if err != nil {
 
 ```go
 type Crypto interface {
-    Encrypt(context.Context, []byte) (string, error)
-    Decrypt(context.Context, string) ([]byte, error)
+    Encrypt([]byte) (string, error)
+    Decrypt(string) ([]byte, error)
 }
 ```
 
@@ -53,7 +51,6 @@ type Crypto interface {
 - AES-256-GCM authenticated encryption
 - Automatic nonce generation for each encryption
 - Base64 encoding of encrypted output
-- Structured logging via [go-sig](https://github.com/gokpm/go-sig)
 - Input validation and error handling
 
 ## Errors
